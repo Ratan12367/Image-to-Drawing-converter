@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Image to Drawing Converter</title>
+
+<style>
+body{
+    font-family: Arial;
+    background: #f5f5f5;
+    text-align: center;
+    padding-top: 40px;
+}
+.box{
+    background: white;
+    width: 700px;
+    margin: auto;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px gray;
+}
+canvas{
+    border: 1px solid #ccc;
+    margin: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h2>🎨 Image to Drawing Converter</h2>
+
+    <input type="file" accept="image/*" onchange="loadImage(event)">
+    <br><br>
+
+    <canvas id="original" width="300" height="300"></canvas>
+    <canvas id="sketch" width="300" height="300"></canvas>
+
+    <p>Left: Original Image | Right: Drawing (Sketch)</p>
+</div>
+
+<script>
+let img = new Image();
+
+function loadImage(event){
+    let file = event.target.files[0];
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+        img.src = e.target.result;
+    }
+    reader.readAsDataURL(file);
+}
+
+img.onload = function(){
+    let oCanvas = document.getElementById("original");
+    let sCanvas = document.getElementById("sketch");
+
+    let oCtx = oCanvas.getContext("2d");
+    let sCtx = sCanvas.getContext("2d");
+
+    oCtx.clearRect(0,0,300,300);
+    sCtx.clearRect(0,0,300,300);
+
+    oCtx.drawImage(img,0,0,300,300);
+
+    let imageData = oCtx.getImageData(0,0,300,300);
+    let data = imageData.data;
+
+    // Convert to grayscale
+    for(let i=0;i<data.length;i+=4){
+        let avg = (data[i] + data[i+1] + data[i+2]) / 3;
+        data[i] = data[i+1] = data[i+2] = avg;
+    }
+
+    // Edge effect (simple sketch)
+    for(let i=0;i<data.length;i+=4){
+        let diff = Math.abs(data[i] - data[i+4] || 0);
+        let val = diff > 15 ? 0 : 255;
+        data[i] = data[i+1] = data[i+2] = val;
+    }
+
+    sCtx.putImageData(imageData,0,0);
+}
+</script>
+
+</body>
+</html>
